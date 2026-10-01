@@ -2,7 +2,7 @@
 
 **A privacy-first Chrome extension that checks how risky your password is, explains why, and helps you replace it. Everything runs on your device.**
 
-**[Try the live demo](https://YOUR-USERNAME.github.io/passguard/)** (no install needed)
+**[Try the live demo](https://Shayan-Chakra.github.io/passguard/)** (no install needed)
 
 ![PassGuard popup](screenshots/popup.png)
 
