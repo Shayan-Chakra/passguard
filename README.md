@@ -4,7 +4,7 @@
 
 **[Try the live demo](https://Shayan-Chakra.github.io/passguard/)** (no install needed)
 
-![PassGuard popup](Screenshots/Screenshot2.png,Screenshots/Screenshot1.png)
+![PassGuard popup](Screenshots/Screenshot1.png)
 
 <!-- Add a short GIF here once you record one, for example: ![Demo](screenshots/demo.gif) -->
 
