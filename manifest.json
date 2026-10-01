@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "PassGuard",
+  "version": "0.1.0",
+  "description": "Privacy-first password risk analysis. Everything runs locally.",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["lib/zxcvbn.js", "riskEngine.js", "generator.js", "content.js"],
+      "css": ["content.css"]
+    }
+  ],
+  "action": { "default_popup": "popup.html" }
+}

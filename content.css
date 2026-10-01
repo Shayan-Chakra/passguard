@@ -1,0 +1,14 @@
+#passguard-badge {
+  position: absolute; z-index: 2147483647;
+  padding: 10px 12px; border-radius: 8px; max-width: 280px;
+  font: 13px/1.4 system-ui, sans-serif; color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+}
+#passguard-badge.pg-low      { background: #2e7d32; }
+#passguard-badge.pg-moderate { background: #f9a825; color: #222; }
+#passguard-badge.pg-high     { background: #ef6c00; }
+#passguard-badge.pg-critical { background: #c62828; }
+#passguard-badge button {
+  margin-top: 8px; padding: 4px 8px; border: 0;
+  border-radius: 4px; cursor: pointer;
+}

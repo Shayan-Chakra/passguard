@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PassGuard - Live Demo</title>
+<meta name="description" content="Try PassGuard: privacy-first password risk analysis that runs entirely in your browser.">
+<style>
+  :root {
+    --ink: #14172B;
+    --ink-soft: #3B4160;
+    --mist: #F3F5FB;
+    --card: #FFFFFF;
+    --line: #E1E5F2;
+    --violet: #5B4BFF;
+    --violet-dark: #4536E0;
+    --mint: #17B890;
+    --amber: #F5A524;
+    --orange: #F07C2A;
+    --coral: #E8455F;
+    --lvl: #B7BDD3;          /* current risk colour, changed by JS */
+  }
+  * { box-sizing: border-box; }
+  body {
+    width: 340px; margin: 0; background: var(--mist); color: var(--ink);
+    font: 14px/1.45 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    background: var(--ink); color: #fff; padding: 16px 18px 46px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  header svg { flex: none; }
+  .brand { font-size: 18px; font-weight: 700; letter-spacing: .2px; }
+  .pill {
+    margin-left: auto; font-size: 11px; padding: 3px 9px; border-radius: 99px;
+    background: rgba(23,184,144,.18); color: #6EE7C5; white-space: nowrap;
+  }
+
+  main { padding: 0 14px 14px; margin-top: -32px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 14px;
+  }
+  .card + .card { margin-top: 12px; }
+  h2 { font-size: 13px; margin: 0 0 10px; color: var(--ink-soft); font-weight: 600; }
+
+  /* ---------- Tester ---------- */
+  #tester[data-level="low"]      { --lvl: var(--mint); }
+  #tester[data-level="moderate"] { --lvl: var(--amber); }
+  #tester[data-level="high"]     { --lvl: var(--orange); }
+  #tester[data-level="critical"] { --lvl: var(--coral); }
+
+  .gauge { position: relative; width: 200px; height: 110px; margin: 0 auto 4px; }
+  .gauge svg { display: block; }
+  .track, .fill { fill: none; stroke-width: 14; stroke-linecap: round; }
+  .track { stroke: var(--line); }
+  .fill  { stroke: var(--lvl); stroke-dasharray: 251.33; stroke-dashoffset: 251.33;
+           transition: stroke-dashoffset .5s ease, stroke .3s ease; }
+  .gauge-text { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; }
+  .gauge-level { font-size: 22px; font-weight: 700; color: var(--lvl); line-height: 1.1; }
+  .gauge-score { font-size: 12px; color: var(--ink-soft); }
+
+  .field { position: relative; margin-top: 8px; }
+  .field input {
+    width: 100%; padding: 10px 40px 10px 12px; font: inherit;
+    border: 1.5px solid var(--line); border-radius: 10px; background: var(--mist);
+    color: var(--ink);
+  }
+  .field input:focus { outline: none; border-color: var(--violet); background: #fff; }
+  .eye {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    border: 0; background: none; cursor: pointer; padding: 4px 6px; font-size: 16px;
+  }
+  .reasons { list-style: none; margin: 10px 0 0; padding: 0; font-size: 13px; }
+  .reasons li { display: flex; gap: 8px; padding: 4px 0; color: var(--ink-soft); }
+  .reasons li::before {
+    content: ""; flex: none; width: 8px; height: 8px; margin-top: 6px;
+    border-radius: 50%; background: var(--lvl);
+  }
+  .hint { margin: 10px 0 0; font-size: 12px; color: var(--ink-soft); }
+
+  /* ---------- Generator ---------- */
+  .output {
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+    background: var(--ink); color: #fff; border-radius: 10px;
+    font: 14px/1.3 ui-monospace, Consolas, "Courier New", monospace;
+  }
+  #pwOut { flex: 1; word-break: break-all; user-select: all; }
+  .icon-btn {
+    flex: none; border: 0; border-radius: 8px; padding: 6px 8px; cursor: pointer;
+    background: rgba(255,255,255,.12); color: #fff; font-size: 15px;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,.22); }
+
+  .row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .row label.name { font-size: 13px; color: var(--ink-soft); min-width: 52px; }
+  input[type=range] { flex: 1; accent-color: var(--violet); }
+  #lenVal { width: 24px; text-align: right; font-weight: 700; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .chip input { position: absolute; opacity: 0; pointer-events: none; }
+  .chip span {
+    display: inline-block; padding: 5px 11px; border-radius: 99px; cursor: pointer;
+    border: 1.5px solid var(--line); font-size: 12.5px; color: var(--ink-soft);
+    user-select: none;
+  }
+  .chip input:checked + span { background: var(--violet); border-color: var(--violet); color: #fff; }
+  .chip input:focus-visible + span { outline: 2px solid var(--violet); outline-offset: 2px; }
+
+  .primary {
+    width: 100%; margin-top: 14px; padding: 11px; border: 0; border-radius: 10px;
+    background: var(--violet); color: #fff; font: inherit; font-weight: 600; cursor: pointer;
+    transition: background .15s;
+  }
+  .primary:hover { background: var(--violet-dark); }
+  .primary.done { background: var(--mint); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
+
+  footer { text-align: center; font-size: 11.5px; color: var(--ink-soft); padding: 0 14px 14px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fill, .primary { transition: none; }
+  }
+
+  /* ---------- Demo page overrides ---------- */
+  body { width: auto; min-height: 100vh; }
+  header { padding: 18px 16px 56px; }
+  .wrap { width: 100%; max-width: 400px; margin: 0 auto; }
+  header .wrap { display: flex; align-items: center; gap: 10px; }
+  main.wrap { padding: 0 14px 20px; margin-top: -40px; }
+  .lede { font-size: 14px; color: var(--ink-soft); margin: 0 0 12px; }
+  .links { display: flex; gap: 8px; margin: 0 0 12px; flex-wrap: wrap; }
+  .links a {
+    padding: 7px 12px; border-radius: 99px; font-size: 13px; font-weight: 600;
+    text-decoration: none; background: var(--violet); color: #fff;
+  }
+  .links a.alt { background: #fff; color: var(--violet); border: 1.5px solid var(--line); }
+  .links a:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; align-items: center; }
+  .examples span.lbl { font-size: 12px; color: var(--ink-soft); }
+  .examples button {
+    border: 1.5px solid var(--line); background: #fff; border-radius: 99px; cursor: pointer;
+    padding: 4px 10px; font: inherit; font-size: 12px; color: var(--ink-soft);
+  }
+  .examples button:hover { border-color: var(--violet); color: var(--violet); }
+  #siteInput { padding-right: 12px; }
+  .note { font-size: 12px; color: var(--ink-soft); text-align: center; margin: 14px 0 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true">
+      <path d="M15 1 L28 6 V16 C28 24 22 30 15 33 C8 30 2 24 2 16 V6 Z" fill="#5B4BFF"/>
+      <path d="M9.5 17 L13.5 21 L21 12.5" fill="none" stroke="#fff" stroke-width="2.8"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="brand">PassGuard</span>
+    <span class="pill">Runs in your browser</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card" id="tester" data-level="none">
+    <p class="lede">Try the risk engine behind the PassGuard Chrome extension. Nothing you type here is sent anywhere.</p>
+    <div class="links">
+      <a href="https://github.com/YOUR-USERNAME/passguard">View source</a>
+      <a class="alt" href="https://github.com/YOUR-USERNAME/passguard/releases">Get the extension</a>
+    </div>
+
+    <h2>Test a password</h2>
+    <div class="gauge">
+      <svg viewBox="0 0 200 110" width="200" height="110" aria-hidden="true">
+        <path class="track" d="M20 100 A80 80 0 0 1 180 100"/>
+        <path class="fill" id="gaugeFill" d="M20 100 A80 80 0 0 1 180 100"/>
+      </svg>
+      <div class="gauge-text" aria-live="polite">
+        <div class="gauge-level" id="levelText">Waiting</div>
+        <div class="gauge-score" id="scoreText">Type below to begin</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <input id="testInput" type="password" placeholder="Type a password to test"
+             autocomplete="off" spellcheck="false" aria-label="Password to test">
+      <button class="eye" id="eyeBtn" type="button" aria-label="Show password">&#128065;</button>
+    </div>
+    <div class="field">
+      <input id="siteInput" type="text" placeholder="Website (optional), e.g. amazon.com"
+             autocomplete="off" spellcheck="false" aria-label="Website name">
+    </div>
+
+    <div class="examples">
+      <span class="lbl">Try:</span>
+      <button type="button" data-pw="Amazon@2026" data-site="amazon.com">Amazon@2026</button>
+      <button type="button" data-pw="qwerty123" data-site="">qwerty123</button>
+      <button type="button" data-pw="Maple-Orbit-Quiet-Lantern-47" data-site="">a strong one</button>
+    </div>
+
+    <ul class="reasons" id="reasons"></ul>
+    <p class="hint" id="hint">Add a website name to see context-aware checks, like a password that contains the site's name.</p>
+  </section>
+
+  <section class="card">
+    <h2>Make a strong password</h2>
+    <div class="output">
+      <span id="pwOut">&nbsp;</span>
+      <button class="icon-btn" id="refreshBtn" type="button" aria-label="Generate a new password">&#8635;</button>
+    </div>
+    <div class="row">
+      <label class="name" for="len">Length</label>
+      <input id="len" type="range" min="8" max="32" value="16">
+      <span id="lenVal">16</span>
+    </div>
+    <div class="chips">
+      <label class="chip"><input type="checkbox" id="optUpper" checked><span>ABC</span></label>
+      <label class="chip"><input type="checkbox" id="optLower" checked><span>abc</span></label>
+      <label class="chip"><input type="checkbox" id="optNumbers" checked><span>123</span></label>
+      <label class="chip"><input type="checkbox" id="optSymbols" checked><span>#$%</span></label>
+    </div>
+    <button class="primary" id="copyBtn" type="button">Copy password</button>
+  </section>
+
+  <p class="note">This page is a demo of the extension's popup. The real extension also warns you on login pages as you type.</p>
+</main>
+
+<script src="zxcvbn.js"></script>
+<script src="riskEngine.js"></script>
+<script src="generator.js"></script>
+<script src="demo.js"></script>
+</body>
+</html>
